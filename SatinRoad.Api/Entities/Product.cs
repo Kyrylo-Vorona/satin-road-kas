@@ -13,8 +13,11 @@ public class Product
     public string Name { get; set; } = null!;
 
     [Column(Name = "price")]
-    public decimal Price { get; set; }
+    public int Price { get; set; }
 
     [Column(Name = "description")]
     public string? Description { get; set; }
+
+    [Column(Name = "user_id")]
+    public int UserId { get; set; }
 }
