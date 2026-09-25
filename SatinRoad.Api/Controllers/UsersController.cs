@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using LinqToDB;
 using SatinRoad.Api.Entities;
+using SatinRoad.Api.DTOs;
 
 namespace SatinRoad.Api.Controllers;
 
@@ -44,5 +45,23 @@ public class UsersController : ControllerBase
 
         await _db.DeleteAsync(user);
         return Ok(new { message = "User has been successfully deleted!" });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == loginDto.Username);
+
+        if (user == null)
+        {
+            return Unauthorized(new { message = "Invalid username or password" });
+        }
+        var verificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password);
+
+        if (verificationResult == PasswordVerificationResult.Failed)
+        {
+            return Unauthorized(new { message = "Invalid username or password" });
+        }
+        return Ok(new { userId = user.Id });
     }
 }
