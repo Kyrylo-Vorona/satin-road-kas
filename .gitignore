@@ -410,6 +410,8 @@ FodyWeavers.xsd
 ## Visual studio for Mac
 ##
 
+appsettings.Development.json
+
 
 # globs
 Makefile.in
