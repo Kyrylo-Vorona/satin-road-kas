@@ -28,6 +28,12 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult> AddUser([FromBody] User user)
     {
+        var existingUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == user.Username);
+        var existingUserEmail = await _db.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+        if (existingUser != null || existingUserEmail != null)
+        {
+            return BadRequest(new { message = "User with this username or email already exists!" });
+        }
         user.PasswordHash = _passwordHasher.HashPassword(user, user.PasswordHash);
 
         await _db.InsertAsync(user);
