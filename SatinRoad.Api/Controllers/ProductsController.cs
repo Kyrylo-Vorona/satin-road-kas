@@ -31,7 +31,8 @@ public class ProductsController : ControllerBase
             Name = dto.Name,
             Price = dto.Price,
             Description = dto.Description,
-            UserId = dto.UserId 
+            UserId = dto.UserId,
+            CategoryId = dto.CategoryId
         };
 
         await _db.InsertAsync(product);

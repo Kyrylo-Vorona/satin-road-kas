@@ -20,4 +20,7 @@ public class Product
 
     [Column(Name = "user_id")]
     public int UserId { get; set; }
+
+    [Column(Name = "category_id")]
+    public int? CategoryId { get; set; }
 }

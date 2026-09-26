@@ -41,4 +41,17 @@ public class CategoriesController : ControllerBase
 
         return Ok(new { message = "Category has been successfully created!" });
     }
+
+    [HttpDelete]
+    public async Task<ActionResult> DeleteCategory([FromQuery] int id)
+    {
+        var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
+        if (category == null)
+        {
+            return NotFound(new { message = "Category not found" });
+        }
+
+        await _db.DeleteAsync(category);
+        return Ok(new { message = "Category has been successfully deleted!" });
+    }
 }
