@@ -112,17 +112,39 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet("bought")]
-    public async Task<ActionResult<List<Product>>> GetBoughtProducts([FromQuery] int userId)
+    public async Task<ActionResult<List<ProductResponseDto>>> GetBoughtProducts([FromQuery] int userId)
     {
-        var products = await (from o in _db.GetTable<Order>() join p in _db.Products on o.ProductId equals p.Id where o.BuyerId == userId select p).ToListAsync();
+        var products = await (from o in _db.GetTable<Order>()
+                            join p in _db.Products on o.ProductId equals p.Id
+                            where o.BuyerId == userId
+                            select new ProductResponseDto
+                            {
+                                Id = p.Id,
+                                Name = p.Name,
+                                Price = p.Price,
+                                Description = p.Description,
+                                VendorId = p.UserId,
+                                PurchasedAt = o.CreatedAt
+                            }).ToListAsync();
 
         return Ok(products);
     }
 
     [HttpGet("sold-by-vendor")]
-    public async Task<ActionResult<List<Product>>> GetVendorSoldProducts([FromQuery] int vendorId)
+    public async Task<ActionResult<List<VendorProductResponseDto>>> GetVendorSoldProducts([FromQuery] int vendorId)
     {
-        var products = await _db.Products.Where(p => p.UserId == vendorId && p.IsSold).ToListAsync();
+        var products = await (from p in _db.Products
+                            join o in _db.GetTable<Order>() on p.Id equals o.ProductId
+                            where p.UserId == vendorId && p.IsSold
+                            select new VendorProductResponseDto
+                            {
+                                Id = p.Id,
+                                Name = p.Name,
+                                Price = p.Price,
+                                Description = p.Description,
+                                BuyerId = o.BuyerId,
+                                SoldAt = o.CreatedAt
+                            }).ToListAsync();
 
         return Ok(products);
     }
