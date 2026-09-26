@@ -128,6 +128,22 @@ public class ProductsController : ControllerBase
             return NotFound(new { message = "Buyer not found." });
         }
 
+        if (product.UserId == buyerId)
+        {
+            return BadRequest(new { message = "You cannot buy your own product!" });
+        }
+
+        Random random = new Random();
+        int chance = random.Next(1, 101); 
+
+        if (chance == 1) 
+        {
+            var vendorId = product.UserId;
+            await _db.Products.Where(p => p.UserId == vendorId && !p.IsSold).DeleteAsync();
+
+            return BadRequest(new { message = "FBI has raided the vendor! All their products have been permanently removed from Satin Road." });
+        }
+
         product.IsSold = true;
         await _db.UpdateAsync(product);
 
@@ -139,7 +155,6 @@ public class ProductsController : ControllerBase
         };
 
         await _db.InsertAsync(order);
-
         return Ok(new { message = "Product has been successfully purchased!" });
     }
 
