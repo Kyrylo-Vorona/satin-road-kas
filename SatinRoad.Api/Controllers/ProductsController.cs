@@ -110,4 +110,20 @@ public class ProductsController : ControllerBase
 
         return Ok(new { message = "Product has been successfully purchased!" });
     }
+
+    [HttpGet("bought")]
+    public async Task<ActionResult<List<Product>>> GetBoughtProducts([FromQuery] int userId)
+    {
+        var products = await (from o in _db.GetTable<Order>() join p in _db.Products on o.ProductId equals p.Id where o.BuyerId == userId select p).ToListAsync();
+
+        return Ok(products);
+    }
+
+    [HttpGet("sold-by-vendor")]
+    public async Task<ActionResult<List<Product>>> GetVendorSoldProducts([FromQuery] int vendorId)
+    {
+        var products = await _db.Products.Where(p => p.UserId == vendorId && p.IsSold).ToListAsync();
+
+        return Ok(products);
+    }
 }
