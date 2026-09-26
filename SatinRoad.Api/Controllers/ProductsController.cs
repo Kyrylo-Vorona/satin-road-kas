@@ -16,10 +16,11 @@ public class ProductsController : ControllerBase
         _db = db;
     }
 
+    // returns products which are not sold yet
     [HttpGet]
     public async Task<ActionResult<List<Product>>> GetProducts()
     {
-        var products = await _db.Products.ToListAsync();
+        var products = await _db.Products.Where(p => !p.IsSold).ToListAsync();
         return Ok(products);
     }
 
@@ -55,6 +56,7 @@ public class ProductsController : ControllerBase
         return Ok(new { message = "Product has been successfully added!" });
     }
 
+    // user can delete his products only if they are not sold yet
     [HttpDelete]
     public async Task<IActionResult> DeleteProduct([FromQuery] int id, [FromQuery] int userId)
     {
@@ -70,7 +72,42 @@ public class ProductsController : ControllerBase
             return BadRequest(new { message = "You can only delete your own products!" });
         }
 
+        if (product.IsSold)
+        {
+            return BadRequest(new { message = "You cannot delete a product that has already been sold!" });
+        }
+
         await _db.DeleteAsync(product);
         return Ok(new { message = "Product has been successfully deleted!" });
+    }
+
+    [HttpPost("buy")]
+    public async Task<IActionResult> BuyProduct([FromQuery] int productId, [FromQuery] int buyerId)
+    {
+        var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == productId);
+        if (product == null)
+        {
+            return NotFound(new { message = "Product not found." });
+        }
+
+        var buyer = await _db.Users.FirstOrDefaultAsync(u => u.Id == buyerId);
+        if (buyer == null)
+        {
+            return NotFound(new { message = "Buyer not found." });
+        }
+
+        product.IsSold = true;
+        await _db.UpdateAsync(product);
+
+        var order = new Order
+        {
+            ProductId = productId,
+            BuyerId = buyerId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _db.InsertAsync(order);
+
+        return Ok(new { message = "Product has been successfully purchased!" });
     }
 }

@@ -23,4 +23,7 @@ public class Product
 
     [Column(Name = "category_id")]
     public int? CategoryId { get; set; }
+
+    [Column(Name = "is_sold")]
+    public bool IsSold { get; set; }
 }
