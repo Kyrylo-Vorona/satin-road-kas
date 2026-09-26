@@ -79,4 +79,14 @@ public class UsersController : ControllerBase
         }
         return Ok(new { userId = user.Id });
     }
+
+    [HttpGet("top-vendors")]
+    public async Task<ActionResult<List<User>>> GetTopVendors()
+    {
+        var topVendorIds = await _db.Products.Where(p => p.IsSold).GroupBy(p => p.UserId).Where(g => g.Count() > 3).Select(g => g.Key).ToListAsync();
+
+        var topVendors = await _db.Users.Where(u => topVendorIds.Contains(u.Id)).ToListAsync();
+
+        return Ok(topVendors);
+    }
 }
