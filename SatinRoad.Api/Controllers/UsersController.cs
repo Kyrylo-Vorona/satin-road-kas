@@ -26,15 +26,24 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult> AddUser([FromBody] User user)
+    public async Task<IActionResult> AddUser([FromBody] RegisterDto dto)
     {
-        var existingUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == user.Username);
-        var existingUserEmail = await _db.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
-        if (existingUser != null || existingUserEmail != null)
+        var existingUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == dto.Username);
+        var existingEmail = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        
+        if (existingUser != null || existingEmail != null)
         {
             return BadRequest(new { message = "User with this username or email already exists!" });
         }
-        user.PasswordHash = _passwordHasher.HashPassword(user, user.PasswordHash);
+
+        var user = new User
+        {
+            Username = dto.Username,
+            Email = dto.Email,
+            Role = "User" 
+        };
+
+        user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
 
         await _db.InsertAsync(user);
         return Ok(new { message = "User has been successfully added with a secure hashed password!" });
