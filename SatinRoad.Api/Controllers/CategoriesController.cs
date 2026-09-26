@@ -42,6 +42,9 @@ public class CategoriesController : ControllerBase
         return Ok(new { message = "Category has been successfully created!" });
     }
 
+    // The database is configured so that when an administrator deletes a category, 
+    // all related products will automatically have their foreign key field set to null, 
+    // so there is no need to implement extra queries or logic to update category_id.
     [HttpDelete]
     public async Task<ActionResult> DeleteCategory([FromQuery] int id)
     {

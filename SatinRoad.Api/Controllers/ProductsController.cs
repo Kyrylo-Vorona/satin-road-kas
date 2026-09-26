@@ -26,13 +26,29 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddProduct([FromBody] CreateProductDto dto)
     {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == dto.UserId);
+        if (user == null)
+        {
+            return BadRequest(new { message = "User with this id does not exist!" });
+        }
+
+        Category? category = null;
+        if (dto.CategoryId.HasValue)
+        {
+            category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == dto.CategoryId.Value);
+            if (category == null)
+            {
+                return BadRequest(new { message = "Category with this id does not exist!" });
+            }
+        }
+
         var product = new Product
         {
             Name = dto.Name,
             Price = dto.Price,
             Description = dto.Description,
             UserId = dto.UserId,
-            CategoryId = dto.CategoryId
+            CategoryId = dto.CategoryId 
         };
 
         await _db.InsertAsync(product);
