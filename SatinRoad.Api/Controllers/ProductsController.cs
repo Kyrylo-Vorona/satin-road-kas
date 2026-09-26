@@ -24,6 +24,38 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    [HttpGet("by-category")]
+    public async Task<ActionResult<List<PublicProductDto>>> GetProductsByCategory([FromQuery] int categoryId)
+    {
+        var products = await _db.Products.Where(p => p.CategoryId == categoryId && !p.IsSold).Select(p => new PublicProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Description = p.Description,
+                VendorId = p.UserId,  
+                CategoryId = p.CategoryId
+            }).ToListAsync();
+
+        return Ok(products);
+    }
+
+    [HttpGet("by-vendor")]
+    public async Task<ActionResult<List<PublicProductDto>>> GetProductsByVendor([FromQuery] int vendorId)
+    {
+        var products = await _db.Products.Where(p => p.UserId == vendorId && !p.IsSold).Select(p => new PublicProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Description = p.Description,
+                VendorId = p.UserId,
+                CategoryId = p.CategoryId
+            }).ToListAsync();
+
+        return Ok(products);
+    }
+
     [HttpPost]
     public async Task<IActionResult> AddProduct([FromBody] CreateProductDto dto)
     {
@@ -111,6 +143,7 @@ public class ProductsController : ControllerBase
         return Ok(new { message = "Product has been successfully purchased!" });
     }
 
+    // returns the products selected user has bought
     [HttpGet("bought")]
     public async Task<ActionResult<List<ProductResponseDto>>> GetBoughtProducts([FromQuery] int userId)
     {
@@ -130,6 +163,7 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    // returns products which are sold from selected vendor
     [HttpGet("sold-by-vendor")]
     public async Task<ActionResult<List<VendorProductResponseDto>>> GetVendorSoldProducts([FromQuery] int vendorId)
     {
