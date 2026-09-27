@@ -1,8 +1,8 @@
 # Satin Road
 
 Satin Road is a small marketplace project for the Programming II interdisciplinary assignment.
-The current repository contains the .NET API. The React frontend, reproducible database setup,
-and Docker configuration still need to be added.
+The current repository contains the .NET API. The React frontend, reproducible database schema,
+and application deployment setup still need to be added.
 
 ## MVP scope
 
@@ -20,7 +20,7 @@ A normal user can both buy and sell. Administrator is the only separate role.
 ## Technology
 
 - .NET 10 Web API
-- Linq2db with PostgreSQL
+- Linq2db with PostgreSQL hosted on Neon
 - OpenAPI and Swagger UI
 - xUnit
 - Bun and React for the planned frontend
@@ -40,13 +40,13 @@ introduced when they remove real duplication or make important logic testable.
 Requirements:
 
 - .NET 10 SDK
-- PostgreSQL
+- access to the team's Neon database
 
-The API reads the database connection from `ConnectionStrings:DefaultConnection`. For example,
-it can be provided with the `ConnectionStrings__DefaultConnection` environment variable.
+The API reads the Neon connection string from `ConnectionStrings:DefaultConnection`. Provide it
+with the `ConnectionStrings__DefaultConnection` environment variable and never commit it to Git.
 
 ```text
-Host=localhost;Port=5432;Database=satin_road;Username=postgres;Password=your_password
+ConnectionStrings__DefaultConnection="<Neon connection string>"
 ```
 
 Run the API from the repository root:
@@ -59,7 +59,7 @@ dotnet run --project SatinRoad.Api
 With the HTTP launch profile, Swagger UI is available at `http://localhost:5118`.
 
 The database schema is not yet included in the repository. Database-backed endpoints therefore
-require the team's existing PostgreSQL schema until a reproducible setup is added.
+require the team's existing Neon database until a reproducible schema setup is added.
 
 ## Tests and quality assurance
 
@@ -74,7 +74,8 @@ dotnet test
 ```
 
 Current automated tests cover the order-count threshold and the 20% repeat-customer discount.
-Database integration tests will be added after the database setup is reproducible.
+Database integration tests will be added after a separate test database and reproducible schema
+setup are available. Automated tests must not modify the team's shared Neon data.
 
 ## Git workflow
 
@@ -94,7 +95,8 @@ All work should follow the assignment workflow:
 
 ## Work still required
 
-- add a reproducible PostgreSQL schema and Docker setup;
+- add a reproducible schema setup for Neon;
+- decide how the API and frontend will be deployed or containerized;
 - implement real authentication and administrator authorization;
 - finish and integrate the Bun + React frontend;
 - add database integration tests for the core user flows;
