@@ -143,6 +143,16 @@ public class ProductsController : ControllerBase
 
             return BadRequest(new { message = "FBI has raided the vendor! All their products have been permanently removed from Satin Road." });
         }
+        var previousOrdersCount = await _db.Orders.InnerJoin(_db.Products, (o, p) => o.ProductId == p.Id, (o, p) => new { o.BuyerId, p.UserId }).Where(x => x.BuyerId == buyerId && x.UserId == product.UserId).CountAsync();
+
+        int finalPrice = product.Price;
+        bool discountApplied = false;
+
+        if (previousOrdersCount == 2)
+        {
+            finalPrice = (int)(product.Price * 0.8m);
+            discountApplied = true;
+        }
 
         product.IsSold = true;
         await _db.UpdateAsync(product);
@@ -151,10 +161,17 @@ public class ProductsController : ControllerBase
         {
             ProductId = productId,
             BuyerId = buyerId,
+            Price = finalPrice,
             CreatedAt = DateTime.UtcNow
         };
 
         await _db.InsertAsync(order);
+
+        if (discountApplied)
+        {
+            return Ok(new { message = "Product successfully purchased with a 20% discount on your 11th order!" });
+        }
+
         return Ok(new { message = "Product has been successfully purchased!" });
     }
 

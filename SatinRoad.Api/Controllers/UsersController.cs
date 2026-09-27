@@ -49,19 +49,6 @@ public class UsersController : ControllerBase
         return Ok(new { message = "User has been successfully added with a secure hashed password!" });
     }
 
-    [HttpDelete]
-    public async Task<ActionResult> DeleteUser([FromQuery] int id)
-    {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
-        if (user == null)
-        {
-            return NotFound(new { message = "User not found" });
-        }
-
-        await _db.DeleteAsync(user);
-        return Ok(new { message = "User has been successfully deleted!" });
-    }
-
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
@@ -83,7 +70,7 @@ public class UsersController : ControllerBase
     [HttpGet("top-vendors")]
     public async Task<ActionResult<List<User>>> GetTopVendors()
     {
-        var topVendorIds = await _db.Products.Where(p => p.IsSold).GroupBy(p => p.UserId).Where(g => g.Count() > 3).Select(g => g.Key).ToListAsync();
+        var topVendorIds = await _db.Products.Where(p => p.IsSold).GroupBy(p => p.UserId).Where(g => g.Count() > 100).Select(g => g.Key).ToListAsync();
 
         var topVendors = await _db.Users.Where(u => topVendorIds.Contains(u.Id)).ToListAsync();
 

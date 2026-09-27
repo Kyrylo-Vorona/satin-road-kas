@@ -11,4 +11,5 @@ public class AppDbContext : DataConnection
     public ITable<Product> Products => this.GetTable<Product>();
     public ITable<User> Users => this.GetTable<User>();
     public ITable<Category> Categories => this.GetTable<Category>();
+    public ITable<Order> Orders => this.GetTable<Order>();
 }

@@ -15,6 +15,9 @@ namespace SatinRoad.Api.Entities
         [Column(Name = "buyer_id")]
         public int BuyerId { get; set; }
 
+        [Column(Name = "price")]
+        public int Price { get; set; }
+
         [Column(Name = "created_at")]
         public DateTime CreatedAt { get; set; }
     }
