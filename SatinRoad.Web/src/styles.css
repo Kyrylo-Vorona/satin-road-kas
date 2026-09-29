@@ -418,19 +418,3 @@ textarea {
   margin: 0;
   min-width: 0;
 }
-
-.subcategory-bar {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 12px 4px;
-  margin-top: 8px;
-  border-bottom: 1px solid #dce1d9;
-}
-
-.subcategory-bar button {
-  width: auto;
-  flex-shrink: 0;
-  margin: 0;
-  border-radius: 20px;
-}

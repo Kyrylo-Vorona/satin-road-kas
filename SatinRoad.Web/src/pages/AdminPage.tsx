@@ -1,20 +1,24 @@
 import CategoryList from '../components/CategoryList';
 import { useAction } from '../hooks/useAction';
-import { type CatalogProps } from '../types';
+import { errorMessage, type CatalogProps } from '../types';
 import type { FormEvent } from 'react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createCategory, deleteCategory } from '../api.ts';
 
 export default function AdminPage({ categories, products, onRefresh }: CatalogProps) {
   const { busy, error, message, setError, setMessage, perform } = useAction(onRefresh);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState('');
+  const deleting = useRef(new Set<number>());
+  const [deletingIds, setDeletingIds] = useState(new Set<number>());
   const selected = categories.find((item) => item.id === selectedId);
   const categoryProducts = products.filter((item) => item.categoryId === selectedId);
 
-  function openForm() {
-    setName('');
+  function openForm(category?: CatalogProps['categories'][number]) {
+    setEditingId(category?.id ?? null);
+    setName(category?.name ?? '');
     setError('');
     setMessage('');
     setFormOpen(true);
@@ -22,6 +26,7 @@ export default function AdminPage({ categories, products, onRefresh }: CatalogPr
 
   function saveCategory(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (editingId !== null) return;
     if (!name.trim()) {
       setError('Please enter a category name.');
       return;
@@ -34,13 +39,22 @@ export default function AdminPage({ categories, products, onRefresh }: CatalogPr
     );
   }
 
-  function removeCategory(category: CatalogProps['categories'][number]) {
-    perform(
-      () => deleteCategory(category.id),
-      'Category deleted.',
-      () => setFormOpen(false),
-      false,
-    );
+  async function removeCategory(category: CatalogProps['categories'][number]) {
+    if (deleting.current.has(category.id)) return;
+    deleting.current.add(category.id);
+    setDeletingIds(new Set(deleting.current));
+    setError('');
+    setMessage('');
+    try {
+      await deleteCategory(category.id);
+      setMessage('Category deleted.');
+      await onRefresh();
+    } catch (failure) {
+      setError(errorMessage(failure));
+    } finally {
+      deleting.current.delete(category.id);
+      setDeletingIds(new Set(deleting.current));
+    }
   }
 
   return (
@@ -79,7 +93,10 @@ export default function AdminPage({ categories, products, onRefresh }: CatalogPr
             onSubmit={saveCategory}
             aria-busy={busy}
           >
-            <h3>Create a category</h3>
+            <h3>{editingId === null ? 'Create a category' : 'Edit category'}</h3>
+            {editingId !== null && (
+              <p role="status">Category editing is ready to preview. Saving changes is not available yet.</p>
+            )}
             <label htmlFor="category-name">Category name</label>
             <input
               id="category-name"
@@ -93,7 +110,7 @@ export default function AdminPage({ categories, products, onRefresh }: CatalogPr
             <div className="admin-actions spaced">
               <button
                 type="submit"
-                disabled={busy}
+                disabled={busy || editingId !== null}
               >
                 {busy ? 'Saving…' : 'Save category'}
               </button>
@@ -109,22 +126,6 @@ export default function AdminPage({ categories, products, onRefresh }: CatalogPr
           </form>
         ) : selected ? (
           <>
-            <nav
-              className="subcategory-bar"
-              aria-label="Subcategories"
-            >
-              {['', ...(selected.subcategories || [])].map((name) => (
-                <button
-                  key={name}
-                  disabled={Boolean(name)}
-                  title={name ? 'Subcategories are not stored by the backend yet' : undefined}
-                  className={name === '' ? '' : 'secondary'}
-                  aria-pressed={name === ''}
-                >
-                  {name || 'All products'}
-                </button>
-              ))}
-            </nav>
             <h3>
               All products <span className="product-count">({categoryProducts.length})</span>
             </h3>
@@ -169,17 +170,17 @@ export default function AdminPage({ categories, products, onRefresh }: CatalogPr
                 <div className="admin-actions">
                   <button
                     className="secondary"
-                    disabled
-                    title="Editing is not supported by the backend yet"
+                    disabled={busy}
+                    onClick={() => openForm(category)}
                     aria-label={`Edit ${category.name}`}
                   >
                     Edit
                   </button>
                   <button
                     className="secondary"
-                    disabled={busy}
+                    disabled={deletingIds.has(category.id)}
                     onClick={() => removeCategory(category)}
-                    aria-label={`Delete ${category.name}`}
+                    aria-label={`Delete category ${category.name}`}
                   >
                     Delete
                   </button>

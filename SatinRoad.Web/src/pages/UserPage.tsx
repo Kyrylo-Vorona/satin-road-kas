@@ -19,7 +19,6 @@ export default function UserPage({
   const [purchase, setPurchase] = useState<Product | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState('');
   const [guestNoticeId, setGuestNoticeId] = useState<number | null>(null);
-  const [quantity, setQuantity] = useState('1');
   const purchaseDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (purchase) purchaseDialog.current?.showModal();
@@ -74,7 +73,6 @@ export default function UserPage({
     if (busy) return;
     setError('');
     setMessage('');
-    setQuantity('1');
     setPurchaseSuccess('');
     setPurchase(product);
   }
@@ -85,13 +83,6 @@ export default function UserPage({
         <p>Sold</p>
       ) : (
         <div className="admin-actions spaced">
-          <button
-            className="secondary"
-            disabled
-            title="Editing is not supported by the backend yet"
-          >
-            Edit
-          </button>
           <button
             className="secondary"
             disabled={busy}
@@ -127,8 +118,7 @@ export default function UserPage({
 
   function confirmPurchase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const count = Number(quantity);
-    if (!Number.isSafeInteger(count) || count < 1 || !purchase || purchaseSuccess) return;
+    if (!purchase || purchaseSuccess) return;
     if (isGuest) return;
     const selectedBuyerId = user.userId;
     if (selectedBuyerId === null || !Number.isInteger(selectedBuyerId) || selectedBuyerId < 1) {
@@ -140,7 +130,7 @@ export default function UserPage({
       return;
     }
     perform(async () => {
-      const result = await buyProduct(purchase.id, count, selectedBuyerId);
+      const result = await buyProduct(purchase.id, selectedBuyerId);
       setPurchaseSuccess(result.message);
       return result;
     }, 'Purchase completed.');
@@ -268,27 +258,7 @@ export default function UserPage({
               aria-busy={busy}
             >
               <h2 id="purchase-title">Buy {purchase.name}</h2>
-              <p>Price per item: {purchase.price}</p>
-              <p>One item per listing.</p>
-              <label htmlFor="purchase-quantity">Quantity</label>
-              <input
-                id="purchase-quantity"
-                type="number"
-                min="1"
-                max="1"
-                step="1"
-                required
-                autoFocus
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-                disabled={busy}
-              />
-              <p>
-                Total:{' '}
-                {Number.isSafeInteger(Number(quantity)) && Number(quantity) > 0
-                  ? purchase.price * Number(quantity)
-                  : '—'}
-              </p>
+              <p>Price: {purchase.price}</p>
               {error && (
                 <p
                   className="error"
@@ -376,22 +346,6 @@ export default function UserPage({
           </>
         ) : (
           <>
-            <nav
-              className="subcategory-bar"
-              aria-label="Subcategories"
-            >
-              {['', ...(category.subcategories || [])].map((name) => (
-                <button
-                  key={name}
-                  disabled={Boolean(name)}
-                  title={name ? 'Subcategories are not stored by the backend yet' : undefined}
-                  className={name === '' ? '' : 'secondary'}
-                  aria-pressed={name === ''}
-                >
-                  {name || 'All products'}
-                </button>
-              ))}
-            </nav>
             <label htmlFor="search">Search products</label>
             <input
               id="search"

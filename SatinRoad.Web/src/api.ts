@@ -20,18 +20,8 @@ export async function login(username: string, password: string): Promise<Account
   return { userId: account.userId, username, role: 'User' };
 }
 
-// Display labels only: the backend does not store subcategories yet.
-const subcategories: Record<string, string[]> = {
-  technology: ['Laptops', 'Smartphones', 'Headphones', 'Cameras', 'Game consoles'],
-  watches: ['Rolex', 'Omega', 'Seiko', 'Vintage watches', 'Pocket watches'],
-  perfumes: ['Chanel', 'Dior', 'Tom Ford', 'Niche perfumes', 'Vintage fragrances'],
-  books: ['First editions', 'Signed books', 'Rare books', 'Classic novels'],
-  antiques: ['Old clocks', 'Vases', 'Furniture', 'Coins', 'Decorative objects'],
-};
-
 export async function getCategories(): Promise<Category[]> {
-  const categories = await request<Omit<Category, 'subcategories'>[]>(() => api.api.categoriesList());
-  return categories.map((item) => ({ ...item, subcategories: subcategories[item.name.toLowerCase()] || [] }));
+  return request<Category[]>(() => api.api.categoriesList());
 }
 export async function getProducts(): Promise<Product[]> {
   const products = await request<import('./generated/Api').Product[]>(() => api.api.productsList());
@@ -61,9 +51,8 @@ export const deleteProduct = (id: number, userId: number | null) => {
   requireUser(userId);
   return request(() => api.api.productsDelete({ id, userId }));
 };
-export async function buyProduct(productId: number, quantity: number, buyerId: number | null) {
+export async function buyProduct(productId: number, buyerId: number | null) {
   requireUser(buyerId);
-  if (quantity !== 1) throw new Error('The backend currently supports one item per purchase.');
   const result = await request(() => api.api.productsBuyCreate({ productId, buyerId }));
   return { message: `Purchase successful! ${result?.message || ''}`.trim() };
 }

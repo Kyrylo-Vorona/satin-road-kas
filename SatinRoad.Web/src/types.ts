@@ -8,7 +8,6 @@ export interface Account {
 export interface Category {
   id: number;
   name: string;
-  subcategories: string[];
 }
 
 export interface Product {
