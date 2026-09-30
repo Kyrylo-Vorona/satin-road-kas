@@ -64,7 +64,7 @@ public class UsersController : ControllerBase
         {
             return Unauthorized(new { message = "Invalid username or password" });
         }
-        return Ok(new { userId = user.Id });
+        return Ok(new { userId = user.Id, username = user.Username, role = user.Role });
     }
 
     [HttpGet("top-vendors")]
