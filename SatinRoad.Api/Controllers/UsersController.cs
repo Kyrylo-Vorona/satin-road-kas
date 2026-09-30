@@ -19,9 +19,16 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<User>>> GetUsers()
+    public async Task<IActionResult> GetUsers()
     {
-        var users = await _db.Users.ToListAsync();
+        var users = await _db.Users.Select(u => new 
+            {
+                id = u.Id,
+                username = u.Username,
+                email = u.Email,
+                role = u.Role
+            }).ToListAsync();
+        
         return Ok(users);
     }
 
@@ -68,11 +75,17 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("top-vendors")]
-    public async Task<ActionResult<List<User>>> GetTopVendors()
+    public async Task<IActionResult> GetTopVendors()
     {
         var topVendorIds = await _db.Products.Where(p => p.IsSold).GroupBy(p => p.UserId).Where(g => g.Count() > 100).Select(g => g.Key).ToListAsync();
 
-        var topVendors = await _db.Users.Where(u => topVendorIds.Contains(u.Id)).ToListAsync();
+        var topVendors = await _db.Users.Where(u => topVendorIds.Contains(u.Id)).Select(u => new 
+            {
+                id = u.Id,
+                username = u.Username,
+                email = u.Email,
+                role = u.Role
+            }).ToListAsync();
 
         return Ok(topVendors);
     }
