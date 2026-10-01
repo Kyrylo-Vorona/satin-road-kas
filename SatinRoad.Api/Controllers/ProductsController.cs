@@ -145,14 +145,8 @@ public class ProductsController : ControllerBase
         }
         var previousOrdersCount = await _db.Orders.InnerJoin(_db.Products, (o, p) => o.ProductId == p.Id, (o, p) => new { o.BuyerId, p.UserId }).Where(x => x.BuyerId == buyerId && x.UserId == product.UserId).CountAsync();
 
-        int finalPrice = product.Price;
-        bool discountApplied = false;
-
-        if (previousOrdersCount == 2)
-        {
-            finalPrice = (int)(product.Price * 0.8m);
-            discountApplied = true;
-        }
+        var discountApplied = PurchaseRules.IsDiscountEligible(previousOrdersCount);
+        var finalPrice = PurchaseRules.CalculateFinalPrice(product.Price, previousOrdersCount);
 
         product.IsSold = true;
         await _db.UpdateAsync(product);
