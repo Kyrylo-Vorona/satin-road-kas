@@ -90,7 +90,7 @@ public class ProductsController : ControllerBase
 
     // user can delete his products only if they are not sold yet
     [HttpDelete]
-    public async Task<IActionResult> DeleteProduct([FromQuery] int id, [FromQuery] int userId)
+    public async Task<IActionResult> DeleteProduct([FromQuery] int id, [FromHeader(Name = "User-Id")] int userId)
     {
         var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == id);
 
@@ -98,7 +98,7 @@ public class ProductsController : ControllerBase
         {
             return NotFound(new { message = "Product not found" });
         }
-
+        
         if (product.UserId != userId)
         {
             return BadRequest(new { message = "You can only delete your own products!" });
