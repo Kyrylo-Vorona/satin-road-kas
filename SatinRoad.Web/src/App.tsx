@@ -3,11 +3,10 @@ import React, { useEffect, useState } from 'react';
 import Login from './pages/Login.tsx';
 import UserPage from './pages/UserPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
-import { getCategories, getProducts, getPreviewUser } from './api.ts';
+import { getCategories, getProducts } from './api.ts';
 
 export default function App() {
   const [user, setUser] = useState<Account | null>(null);
-  const [message, setMessage] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState('');
@@ -40,15 +39,6 @@ export default function App() {
     if (user) load();
   }, [user]);
 
-  async function openPreview(role: Account['role']) {
-    setMessage('');
-    try {
-      setUser(role === 'User' ? await getPreviewUser() : { role, userId: null });
-    } catch (failure) {
-      setMessage(errorMessage(failure));
-    }
-  }
-
   if (user)
     return (
       <main className="dashboard">
@@ -56,16 +46,6 @@ export default function App() {
           <h1>KAS Satin Road</h1>
           <button onClick={() => setUser(null)}>Back to login</button>
         </header>
-        {user.role === 'Admin' && (
-          <p className="preview-note">
-            Admin preview uses real database data. Creating or deleting a category saves the change.
-          </p>
-        )}
-        {user.isPreview && (
-          <p className="preview-note">
-            Preview User: {user.username}. Products and purchases save to the database.
-          </p>
-        )}
         {loading ? (
           <p role="status">Loading…</p>
         ) : error ? (
@@ -106,35 +86,10 @@ export default function App() {
         <p>Log in to buy and sell products, or continue as a guest to browse.</p>
       </section>
       <div className="card">
-        {message && (
-          <p
-            className="preview-note"
-            role="status"
-          >
-            {message}
-          </p>
-        )}
         <Login
           onLogin={setUser}
-          onGuest={() => openPreview('Guest')}
+          onGuest={() => setUser({ role: 'Guest', userId: null })}
         />
-        <div
-          className="admin-actions spaced"
-          aria-label="Preview sections"
-        >
-          <button
-            className="secondary"
-            onClick={() => openPreview('User')}
-          >
-            Preview User
-          </button>
-          <button
-            className="secondary"
-            onClick={() => openPreview('Admin')}
-          >
-            Preview Admin
-          </button>
-        </div>
       </div>
     </main>
   );

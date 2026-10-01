@@ -15,9 +15,15 @@ async function request<T = Message>(operation: () => Promise<{ data: unknown }>)
 }
 
 export async function login(username: string, password: string): Promise<Account> {
-  const account = await request<{ userId: number }>(() => api.api.usersLoginCreate({ username, password }));
-  if (!Number.isInteger(account?.userId)) throw new Error('The server returned an invalid login response.');
-  return { userId: account.userId, username, role: 'User' };
+  const account = await request<{ userId: number; username: string; role: 'User' | 'Admin' }>(
+    () => api.api.usersLoginCreate({ username, password }),
+  );
+  if (
+    !Number.isInteger(account?.userId) || account.userId < 1 ||
+    typeof account.username !== 'string' || !account.username.trim() ||
+    (account.role !== 'User' && account.role !== 'Admin')
+  ) throw new Error('The server returned an invalid login response.');
+  return { userId: account.userId, username: account.username, role: account.role };
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -26,16 +32,6 @@ export async function getCategories(): Promise<Category[]> {
 export async function getProducts(): Promise<Product[]> {
   const products = await request<import('./generated/Api').Product[]>(() => api.api.productsList());
   return products.map((item) => ({ id: Number(item.id), name: item.name || '', price: Number(item.price), description: item.description ?? null, categoryId: item.categoryId == null ? null : Number(item.categoryId), owner: Number(item.userId), sold: item.isSold ?? false }));
-}
-export async function getPreviewOwners() {
-  const users = await request<import('./generated/Api').User[]>(() => api.api.usersList());
-  return users.map(({ id, username }) => ({ id: Number(id), username: username || '' }));
-}
-export async function getPreviewUser(): Promise<Account> {
-  const users = await getPreviewOwners();
-  const account = users.find((user) => user.username === 'user1');
-  if (!account) throw new Error('The preview account user1 is unavailable.');
-  return { userId: account.id, username: account.username, role: 'User', isPreview: true };
 }
 export const createCategory = (name: string) => request(() => api.api.categoriesCreate({ name }));
 export const deleteCategory = (id: number) => request(() => api.api.categoriesDelete({ id }));

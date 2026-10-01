@@ -2,7 +2,6 @@ export interface Account {
   role: 'Guest' | 'User' | 'Admin';
   userId: number | null;
   username?: string;
-  isPreview?: boolean;
 }
 
 export interface Category {
