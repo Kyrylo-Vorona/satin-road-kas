@@ -482,3 +482,11 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Local frontend package cache
+.pnpm-store/
+
+# Frontend dependencies, build output, and local settings
+SatinRoad.Web/node_modules/
+SatinRoad.Web/dist/
+SatinRoad.Web/.env.local

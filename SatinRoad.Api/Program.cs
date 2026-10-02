@@ -25,7 +25,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// Vite forwards local /api requests over HTTP. Redirecting them to the
+// development HTTPS port bypasses that proxy and requires a trusted certificate.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.MapControllers();
 

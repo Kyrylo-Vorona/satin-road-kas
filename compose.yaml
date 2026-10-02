@@ -1,0 +1,15 @@
+services:
+  api:
+    build: ./SatinRoad.Api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: ${SATINROAD_DB_CONNECTION:?Set SATINROAD_DB_CONNECTION to the existing PostgreSQL connection string}
+    restart: unless-stopped
+
+  web:
+    build: ./SatinRoad.Web
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
