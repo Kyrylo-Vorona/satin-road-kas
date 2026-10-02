@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Login from './pages/Login.tsx';
 import UserPage from './pages/UserPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
-import { getCategories, getProducts } from './api.ts';
+import { currentAccount, getCategories, getProducts, logout } from './api.ts';
 
 export default function App() {
   const [user, setUser] = useState<Account | null>(null);
@@ -11,6 +11,22 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [sessionError, setSessionError] = useState('');
+
+  useEffect(() => {
+    currentAccount().then(setUser).catch(() => {}).finally(() => setCheckingSession(false));
+  }, []);
+
+  async function leaveAccount(nextUser: Account | null) {
+    setSessionError('');
+    try {
+      await logout();
+      setUser(nextUser);
+    } catch {
+      setSessionError('Could not log out. Please try again.');
+    }
+  }
 
   async function refresh() {
     const [categoryData, productData] = await Promise.all([getCategories(), getProducts()]);
@@ -39,13 +55,16 @@ export default function App() {
     if (user) load();
   }, [user]);
 
+  if (checkingSession) return <main className="layout"><p role="status">Checking session…</p></main>;
+
   if (user)
     return (
       <main className="dashboard">
         <header className="page-header">
           <h1>KAS Satin Road</h1>
-          <button onClick={() => setUser(null)}>Back to login</button>
+          <button onClick={() => void leaveAccount(null)}>Back to login</button>
         </header>
+        {sessionError && <p role="alert">{sessionError}</p>}
         {loading ? (
           <p role="status">Loading…</p>
         ) : error ? (
@@ -86,9 +105,10 @@ export default function App() {
         <p>Log in to buy and sell products, or continue as a guest to browse.</p>
       </section>
       <div className="card">
+        {sessionError && <p role="alert">{sessionError}</p>}
         <Login
           onLogin={setUser}
-          onGuest={() => setUser({ role: 'Guest', userId: null })}
+          onGuest={() => void leaveAccount({ role: 'Guest', userId: null })}
         />
       </div>
     </main>

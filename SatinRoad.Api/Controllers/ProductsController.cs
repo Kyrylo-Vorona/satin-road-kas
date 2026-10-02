@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using LinqToDB;
 using SatinRoad.Api.Entities;
 using SatinRoad.Api.DTOs;
@@ -15,6 +17,10 @@ public class ProductsController : ControllerBase
     {
         _db = db;
     }
+
+    private int? CurrentUserId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
+        ? id
+        : null;
 
     // returns products which are not sold yet
     [HttpGet]
@@ -57,8 +63,14 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "User")]
     public async Task<IActionResult> AddProduct([FromBody] CreateProductDto dto)
     {
+        if (CurrentUserId != dto.UserId)
+        {
+            return Forbid();
+        }
+
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == dto.UserId);
         if (user == null)
         {
@@ -90,8 +102,14 @@ public class ProductsController : ControllerBase
 
     // user can delete his products only if they are not sold yet
     [HttpDelete]
+    [Authorize(Roles = "User")]
     public async Task<IActionResult> DeleteProduct([FromQuery] int id, [FromQuery] int userId)
     {
+        if (CurrentUserId != userId)
+        {
+            return Forbid();
+        }
+
         var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == id);
 
         if (product == null)
@@ -99,9 +117,9 @@ public class ProductsController : ControllerBase
             return NotFound(new { message = "Product not found" });
         }
 
-        if (product.UserId != userId)
+        if (product.UserId != CurrentUserId)
         {
-            return BadRequest(new { message = "You can only delete your own products!" });
+            return Forbid();
         }
 
         if (product.IsSold)
@@ -114,8 +132,14 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("buy")]
+    [Authorize(Roles = "User")]
     public async Task<IActionResult> BuyProduct([FromQuery] int productId, [FromQuery] int buyerId)
     {
+        if (CurrentUserId != buyerId)
+        {
+            return Forbid();
+        }
+
         var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == productId);
         if (product == null)
         {
@@ -171,8 +195,14 @@ public class ProductsController : ControllerBase
 
     // returns the products selected user has bought
     [HttpGet("bought")]
+    [Authorize(Roles = "User")]
     public async Task<ActionResult<List<ProductResponseDto>>> GetBoughtProducts([FromQuery] int userId)
     {
+        if (CurrentUserId != userId)
+        {
+            return Forbid();
+        }
+
         var products = await (from o in _db.GetTable<Order>()
                             join p in _db.Products on o.ProductId equals p.Id
                             where o.BuyerId == userId
@@ -191,8 +221,14 @@ public class ProductsController : ControllerBase
 
     // returns products which are sold from selected vendor
     [HttpGet("sold-by-vendor")]
+    [Authorize(Roles = "User")]
     public async Task<ActionResult<List<VendorProductResponseDto>>> GetVendorSoldProducts([FromQuery] int vendorId)
     {
+        if (CurrentUserId != vendorId)
+        {
+            return Forbid();
+        }
+
         var products = await (from p in _db.Products
                             join o in _db.GetTable<Order>() on p.Id equals o.ProductId
                             where p.UserId == vendorId && p.IsSold

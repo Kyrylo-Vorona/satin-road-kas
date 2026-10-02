@@ -1,5 +1,6 @@
 using LinqToDB;
 using LinqToDB.AspNet;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using SatinRoad.Api;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,26 @@ builder.Services.AddLinqToDBContext<AppDbContext>((provider, options) =>
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "SatinRoad.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.ExpireTimeSpan = TimeSpan.FromHours(2);
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
+    });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -31,6 +52,24 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    var unsafeMethod = !HttpMethods.IsGet(context.Request.Method) &&
+        !HttpMethods.IsHead(context.Request.Method) &&
+        !HttpMethods.IsOptions(context.Request.Method);
+    if (unsafeMethod && context.User.Identity?.IsAuthenticated == true &&
+        context.Request.Headers.TryGetValue("Sec-Fetch-Site", out var site) &&
+        site != "same-origin")
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return;
+    }
+
+    await next();
+});
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using LinqToDB;
 using SatinRoad.Api.Entities;
 using SatinRoad.Api.DTOs;
@@ -70,7 +74,41 @@ public class UsersController : ControllerBase
         {
             return Unauthorized(new { message = "Invalid username or password" });
         }
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Role, user.Role)
+        };
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignInAsync(new ClaimsPrincipal(identity));
+
         return Ok(new { userId = user.Id, username = user.Username, role = user.Role });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        return Ok(new
+        {
+            userId,
+            username = User.Identity?.Name,
+            role = User.FindFirstValue(ClaimTypes.Role)
+        });
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync();
+        return Ok(new { message = "Logged out." });
     }
 
     [HttpGet("top-vendors")]

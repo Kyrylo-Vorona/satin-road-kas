@@ -118,18 +118,6 @@ export interface RegisterDto {
   password: string;
 }
 
-export interface User {
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  id?: number | string;
-  username?: string;
-  email?: string;
-  passwordHash?: string;
-  role?: string;
-}
-
 export interface VendorProductResponseDto {
   /**
    * @format int32
@@ -205,7 +193,7 @@ export enum ContentType {
 }
 
 export class HttpClient<SecurityDataType = unknown> {
-  public baseUrl: string = "http://localhost:5122/";
+  public baseUrl: string = "http://localhost:5118/";
   private securityData: SecurityDataType | null = null;
   private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"];
   private abortControllers = new Map<CancelToken, AbortController>();
@@ -410,7 +398,7 @@ export class HttpClient<SecurityDataType = unknown> {
 /**
  * @title SatinRoad.Api | v1
  * @version 1.0.0
- * @baseUrl http://localhost:5122/
+ * @baseUrl http://localhost:5118/
  */
 export class Api<
   SecurityDataType extends unknown,
@@ -667,10 +655,9 @@ export class Api<
      * @request GET:/api/Users
      */
     usersList: (params: RequestParams = {}) =>
-      this.request<User[], any>({
+      this.request<void, any>({
         path: `/api/Users`,
         method: "GET",
-        format: "json",
         ...params,
       }),
 
@@ -710,14 +697,41 @@ export class Api<
      * No description
      *
      * @tags Users
+     * @name UsersMeList
+     * @request GET:/api/Users/me
+     */
+    usersMeList: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/Users/me`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Users
+     * @name UsersLogoutCreate
+     * @request POST:/api/Users/logout
+     */
+    usersLogoutCreate: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/Users/logout`,
+        method: "POST",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Users
      * @name UsersTopVendorsList
      * @request GET:/api/Users/top-vendors
      */
     usersTopVendorsList: (params: RequestParams = {}) =>
-      this.request<User[], any>({
+      this.request<void, any>({
         path: `/api/Users/top-vendors`,
         method: "GET",
-        format: "json",
         ...params,
       }),
   };

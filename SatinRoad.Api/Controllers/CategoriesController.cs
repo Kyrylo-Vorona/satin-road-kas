@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using LinqToDB;
 using SatinRoad.Api.Entities;
 using SatinRoad.Api.DTOs;
@@ -24,6 +25,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto dto)
     {
         var existingCategory = await _db.Categories.FirstOrDefaultAsync(c => c.Name == dto.Name);
@@ -46,6 +48,7 @@ public class CategoriesController : ControllerBase
     // all related products will automatically have their foreign key field set to null, 
     // so there is no need to implement extra queries or logic to update category_id.
     [HttpDelete]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult> DeleteCategory([FromQuery] int id)
     {
         var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
