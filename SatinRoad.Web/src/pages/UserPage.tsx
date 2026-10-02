@@ -47,7 +47,7 @@ export default function UserPage({
     };
     const ownerId = user.userId;
     if (ownerId === null || !Number.isInteger(ownerId) || ownerId < 1) {
-      setError('Please reopen Preview User or log in to continue.');
+      setError('Please log in to continue.');
       return;
     }
     perform(
@@ -122,7 +122,7 @@ export default function UserPage({
     if (isGuest) return;
     const selectedBuyerId = user.userId;
     if (selectedBuyerId === null || !Number.isInteger(selectedBuyerId) || selectedBuyerId < 1) {
-      setError('Please reopen Preview User or log in to continue.');
+      setError('Please log in to continue.');
       return;
     }
     if (selectedBuyerId === purchase.owner) {
@@ -170,10 +170,8 @@ export default function UserPage({
               <label htmlFor="price">Price</label>
               <input
                 id="price"
-                type="number"
-                min="1"
-                max="2147483647"
-                step="1"
+                type="text"
+                inputMode="numeric"
                 value={draft.price}
                 onChange={(event) => setDraft({ ...draft, price: event.target.value })}
                 required
