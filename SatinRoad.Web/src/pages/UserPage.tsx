@@ -130,7 +130,7 @@ export default function UserPage({
       return;
     }
     perform(async () => {
-      const result = await buyProduct(purchase.id, selectedBuyerId);
+      const result = await buyProduct(purchase.id);
       setPurchaseSuccess(result.message);
       return result;
     }, 'Purchase completed.');

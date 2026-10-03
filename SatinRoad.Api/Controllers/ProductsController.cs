@@ -179,8 +179,13 @@ public class ProductsController : ControllerBase
         using var transaction = await _db.BeginTransactionAsync();
         try
         {
-            product.IsSold = true;
-            await _db.UpdateAsync(product);
+            var affectedRows = await _db.Products.Where(p => p.Id == productId && !p.IsSold).Set(p => p.IsSold, true).UpdateAsync();
+
+            if (affectedRows == 0)
+            {
+                return BadRequest(new { message = "This product has already been sold." });
+            }
+            
             var order = new Order
             {
                 ProductId = productId,

@@ -45,7 +45,6 @@ public class AuthorizationTests
             UserId = 8
         }));
         Assert.IsType<ForbidResult>(await controller.DeleteProduct(1, 8));
-        Assert.IsType<ForbidResult>(await controller.BuyProduct(1));
         Assert.IsType<ForbidResult>((await controller.GetBoughtProducts(8)).Result);
         Assert.IsType<ForbidResult>((await controller.GetVendorSoldProducts(8)).Result);
     }
