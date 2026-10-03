@@ -582,11 +582,6 @@ export class Api<
          * @pattern ^-?(?:0|[1-9]\d*)$
          */
         productId?: number | string;
-        /**
-         * @format int32
-         * @pattern ^-?(?:0|[1-9]\d*)$
-         */
-        buyerId?: number | string;
       },
       params: RequestParams = {},
     ) =>
