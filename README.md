@@ -1,8 +1,8 @@
 # Satin Road
 
 Satin Road is a small marketplace project for the Programming II interdisciplinary assignment.
-The current repository contains the .NET API. The React frontend, reproducible database schema,
-and application deployment setup still need to be added.
+The repository contains the .NET API and a Bun + React frontend. The database is hosted on Neon;
+a reproducible schema setup is still needed.
 
 ## MVP scope
 
@@ -23,13 +23,15 @@ A normal user can both buy and sell. Administrator is the only separate role.
 - Linq2db with PostgreSQL hosted on Neon
 - OpenAPI and Swagger UI
 - xUnit
-- Bun and React for the planned frontend
+- Bun and React
 
 ## Repository structure
 
 ```text
 SatinRoad.Api/        API, entities, DTOs, and business rules
 SatinRoad.Api.Tests/  xUnit tests
+SatinRoad.Web/        Bun + React frontend
+compose.yaml          Local Docker setup for the API and frontend
 ```
 
 The project intentionally keeps a small structure. New layers and abstractions should only be
@@ -58,6 +60,18 @@ dotnet run --project SatinRoad.Api
 
 With the HTTP launch profile, Swagger UI is available at `http://localhost:5118`.
 
+For local frontend development, run `bun install` and `bun run dev` in `SatinRoad.Web/`.
+Vite serves the frontend at `http://localhost:5173` and forwards `/api` to the local API.
+
+To run the frontend and API with Docker, set `SATINROAD_DB_CONNECTION` to the team's Neon
+connection string, then run `docker compose up --build`. Open `http://localhost:8080`.
+Compose does not start a database container; Neon remains external. The port is bound to
+localhost, and this HTTP setup is for local testing only, not public deployment.
+
+Successful login creates a server-verified session cookie. The frontend sends it automatically
+on same-origin API requests, and logging out clears it. A Docker restart may require another
+login because session keys are not persisted.
+
 The database schema is not yet included in the repository. Database-backed endpoints therefore
 require the team's existing Neon database until a reproducible schema setup is added.
 
@@ -73,7 +87,8 @@ Run all tests with:
 dotnet test
 ```
 
-Current automated tests cover the order-count threshold and the 20% repeat-customer discount.
+Current automated tests cover the order-count threshold, the 20% repeat-customer discount,
+and basic authorization rules. They do not yet cover the full login flow over HTTP.
 Database integration tests will be added after a separate test database and reproducible schema
 setup are available. Automated tests must not modify the team's shared Neon data.
 
@@ -95,12 +110,10 @@ All work should follow the assignment workflow:
 
 ## Work still required
 
-- add a reproducible schema setup for Neon;
-- decide how the API and frontend will be deployed or containerized;
-- implement real authentication and administrator authorization;
-- finish and integrate the Bun + React frontend;
+- add a reproducible database schema and a separate test database;
+- verify the full user and administrator flows through the Docker frontend;
+- configure HTTPS and durable session keys before any public deployment;
 - add database integration tests for the core user flows;
-- create and use GitHub Projects, Issues, pull requests, and reviews;
 - run Lighthouse when the frontend is available and document the results here.
 
 Optional hard stories should be completed only after the full MVP flow works from frontend to

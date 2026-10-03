@@ -3,28 +3,44 @@ import type { CreateProductDto } from './generated/Api';
 type Message = { message?: string };
 import { Api } from './generated/Api.ts';
 
-const api = new Api({ baseUrl: '', baseApiParams: { format: 'json' } });
+const api = new Api({ baseUrl: '', baseApiParams: { format: 'json', credentials: 'same-origin' } });
 
-async function request<T = Message>(operation: () => Promise<{ data: unknown }>): Promise<T> {
+async function request<T = Message>(operation: () => Promise<{ data: unknown }>, loginAttempt = false): Promise<T> {
   try { return (await operation()).data as T; }
   catch (failure) {
     const response = failure as { status?: number; error?: Message };
-    throw new Error(response.status === 401 ? 'Incorrect username or password.'
+    throw new Error(response.status === 401 ? (loginAttempt ? 'Incorrect username or password.' : 'Please log in again.')
       : response.error?.message || 'The request failed. Check that the backend is running and try again.');
   }
 }
 
+function validAccount(account: unknown): Account {
+  const value = account as { userId?: number; username?: string; role?: string } | null;
+  if (
+    !value || typeof value.userId !== 'number' || !Number.isInteger(value.userId) || value.userId < 1 ||
+    typeof value.username !== 'string' || !value.username.trim() ||
+    (value.role !== 'User' && value.role !== 'Admin')
+  ) throw new Error('The server returned an invalid login response.');
+  return { userId: value.userId, username: value.username, role: value.role };
+}
+
 export async function login(username: string, password: string): Promise<Account> {
   const account = await request<{ userId: number; username: string; role: 'User' | 'Admin' }>(
-    () => api.api.usersLoginCreate({ username, password }),
+    () => api.api.usersLoginCreate({ username, password }), true,
   );
-  if (
-    !Number.isInteger(account?.userId) || account.userId < 1 ||
-    typeof account.username !== 'string' || !account.username.trim() ||
-    (account.role !== 'User' && account.role !== 'Admin')
-  ) throw new Error('The server returned an invalid login response.');
-  return { userId: account.userId, username: account.username, role: account.role };
+  return validAccount(account);
 }
+
+export async function currentAccount(): Promise<Account | null> {
+  try {
+    return validAccount((await api.api.usersMeList()).data);
+  } catch (failure) {
+    if ((failure as { status?: number }).status === 401) return null;
+    throw failure;
+  }
+}
+
+export const logout = () => request(() => api.api.usersLogoutCreate());
 
 export async function getCategories(): Promise<Category[]> {
   return request<Category[]>(() => api.api.categoriesList());
