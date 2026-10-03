@@ -133,11 +133,11 @@ public class ProductsController : ControllerBase
 
     [HttpPost("buy")]
     [Authorize(Roles = "User")]
-    public async Task<IActionResult> BuyProduct([FromQuery] int productId, [FromQuery] int buyerId)
+    public async Task<IActionResult> BuyProduct([FromQuery] int productId)
     {
-        if (CurrentUserId != buyerId)
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var buyerId))
         {
-            return Forbid();
+            return Unauthorized(new { message = "User is not authenticated." });
         }
 
         var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == productId);
@@ -145,13 +145,16 @@ public class ProductsController : ControllerBase
         {
             return NotFound(new { message = "Product not found." });
         }
+        if (product.IsSold)
+        {
+            return BadRequest(new { message = "This product has already been sold." });
+        }
 
         var buyer = await _db.Users.FirstOrDefaultAsync(u => u.Id == buyerId);
         if (buyer == null)
         {
             return NotFound(new { message = "Buyer not found." });
         }
-
         if (product.UserId == buyerId)
         {
             return BadRequest(new { message = "You cannot buy your own product!" });
@@ -167,29 +170,36 @@ public class ProductsController : ControllerBase
 
             return BadRequest(new { message = "FBI has raided the vendor! All their products have been permanently removed from Satin Road." });
         }
+        
         var previousOrdersCount = await _db.Orders.InnerJoin(_db.Products, (o, p) => o.ProductId == p.Id, (o, p) => new { o.BuyerId, p.UserId }).Where(x => x.BuyerId == buyerId && x.UserId == product.UserId).CountAsync();
 
         var discountApplied = PurchaseRules.IsDiscountEligible(previousOrdersCount);
         var finalPrice = PurchaseRules.CalculateFinalPrice(product.Price, previousOrdersCount);
 
-        product.IsSold = true;
-        await _db.UpdateAsync(product);
-
-        var order = new Order
+        using var transaction = await _db.BeginTransactionAsync();
+        try
         {
-            ProductId = productId,
-            BuyerId = buyerId,
-            Price = finalPrice,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _db.InsertAsync(order);
-
+            product.IsSold = true;
+            await _db.UpdateAsync(product);
+            var order = new Order
+            {
+                ProductId = productId,
+                BuyerId = buyerId,
+                Price = finalPrice,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _db.InsertAsync(order);
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, new { message = "An error occurred while processing the purchase." });
+        }
         if (discountApplied)
         {
             return Ok(new { message = "Product successfully purchased with a 20% discount on your 11th order!" });
         }
-
         return Ok(new { message = "Product has been successfully purchased!" });
     }
 
