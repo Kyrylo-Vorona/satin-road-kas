@@ -1,14 +1,13 @@
 # Satin Road
 
 Satin Road is a small marketplace project for the Programming II interdisciplinary assignment.
-The repository contains the .NET API and a Bun + React frontend. The database is hosted on Neon;
-a reproducible schema setup is still needed.
+The repository contains the .NET API and a Bun + React frontend. The database is hosted on Neon.
 
 ## MVP scope
 
-The team is focusing on the basic flow before optional features:
+The implemented basic flow is:
 
-- register and log in;
+- log in as a normal user or administrator;
 - browse and create product listings;
 - browse categories;
 - manage personal inventory;
@@ -16,6 +15,8 @@ The team is focusing on the basic flow before optional features:
 - allow administrators to manage categories.
 
 A normal user can both buy and sell. Administrator is the only separate role.
+Authentication is an additional project feature rather than an assignment requirement. Test users
+can be created through Swagger/API; the frontend provides login but not a registration screen.
 
 ## Technology
 
@@ -88,9 +89,38 @@ dotnet test
 ```
 
 Current automated tests cover the order-count threshold, the 20% repeat-customer discount,
-and basic authorization rules. They do not yet cover the full login flow over HTTP.
+controller ownership checks, and basic authorization rules. The final user and administrator flows
+were therefore also tested manually through the Docker frontend.
 Database integration tests will be added after a separate test database and reproducible schema
 setup are available. Automated tests must not modify the team's shared Neon data.
+
+## Lighthouse and sustainability
+
+Lighthouse 13.5.0 was run on 4 October 2026 against the Docker production build at
+`http://localhost:8080`. The audit used Lighthouse's default mobile configuration and the public
+login page.
+
+| Category | Score |
+| --- | ---: |
+| Performance | 81 |
+| Accessibility | 100 |
+| Best practices | 96 |
+| SEO | 100 |
+
+The measured First Contentful Paint was 2.1 seconds, Largest Contentful Paint was 2.3 seconds,
+Total Blocking Time was 0 ms, and Cumulative Layout Shift was 0.296. The initial page transferred
+243 KiB in four requests. It loaded no images, web fonts, media, or third-party resources.
+
+The frontend uses a production Vite build served by nginx. Its small dependency set, lack of
+third-party page resources, and absence of continuous client-side work keep network and CPU use
+limited. Docker makes the same production build reproducible for local testing, while Neon remains
+an external shared service. A standard `robots.txt` was added after the first audit, improving the
+SEO score from 91 to 100.
+
+The remaining performance cost is mainly the initial session check and its layout change. An
+anonymous session also produces an expected `401` response from `/api/Users/me`, which Lighthouse
+reports as a console error and lowers the Best Practices score. These were documented instead of
+adding extra session or layout code solely to improve the audit score.
 
 ## Git workflow
 
@@ -108,13 +138,11 @@ All work should follow the assignment workflow:
 - Azade: React frontend and API integration
 - Samuele: xUnit tests, GitHub Projects/Issues, Lighthouse, and README
 
-## Work still required
+## Future improvements
 
 - add a reproducible database schema and a separate test database;
-- verify the full user and administrator flows through the Docker frontend;
 - configure HTTPS and durable session keys before any public deployment;
 - add database integration tests for the core user flows;
-- run Lighthouse when the frontend is available and document the results here.
 
 Optional hard stories should be completed only after the full MVP flow works from frontend to
 API and database.
