@@ -225,7 +225,7 @@ public class ProductsController : ControllerBase
                             {
                                 Id = p.Id,
                                 Name = p.Name,
-                                Price = p.Price,
+                                Price = o.Price,
                                 Description = p.Description,
                                 VendorId = p.UserId,
                                 PurchasedAt = o.CreatedAt
@@ -251,7 +251,7 @@ public class ProductsController : ControllerBase
                             {
                                 Id = p.Id,
                                 Name = p.Name,
-                                Price = p.Price,
+                                Price = o.Price,
                                 Description = p.Description,
                                 BuyerId = o.BuyerId,
                                 SoldAt = o.CreatedAt
