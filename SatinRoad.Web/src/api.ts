@@ -63,8 +63,7 @@ export const deleteProduct = (id: number, userId: number | null) => {
   requireUser(userId);
   return request(() => api.api.productsDelete({ id, userId }));
 };
-export async function buyProduct(productId: number, buyerId: number | null) {
-  requireUser(buyerId);
-  const result = await request(() => api.api.productsBuyCreate({ productId, buyerId }));
+export async function buyProduct(productId: number) {
+  const result = await request(() => api.api.productsBuyCreate({ productId }));
   return { message: `Purchase successful! ${result?.message || ''}`.trim() };
 }
